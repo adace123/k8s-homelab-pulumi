@@ -1,0 +1,15 @@
+- name: dev
+  namespaces: [default]
+  policies: [dev]
+
+- name: staging
+  namespaces: [default]
+  policies: [staging]
+
+- name: prod
+  namespaces: [default]
+  policies: [prod]
+
+- name: admin
+  namespaces: [default]
+  policies: [admin]

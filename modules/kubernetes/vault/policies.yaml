@@ -1,0 +1,31 @@
+- name: dev
+  policy: |
+    path "secret/data/dev" {
+      capabilities = ["read", "list", "create", "delete", "update"]
+    }
+
+    path "auth/token/create" {
+      capabilities = ["update"]
+    }
+
+- name: staging
+  policy: |
+    path "secret/data/staging" {
+      capabilities = ["read", "list", "create", "delete", "update"]
+    }
+
+    path "auth/token/create" {
+      capabilities = ["update"]
+    }
+
+- name: prod
+  policy: |
+    path "secret/data/prod" {
+      capabilities = ["read", "list", "create", "delete", "update"]
+    }
+
+- name: admin
+  policy: |
+    path "*/*" {
+      capabilities = ["read", "list", "create", "delete", "update", "sudo"]
+    }
