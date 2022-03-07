@@ -1,24 +1,26 @@
+import { local } from '@pulumi/command';
 import * as k8s from '@pulumi/kubernetes';
 import * as pulumi from '@pulumi/pulumi';
 import * as vault from '@pulumi/vault';
-import * as yaml from 'yaml';
-import { local } from '@pulumi/command';
-import { provider, cluster } from '../cluster';
-import { resolve } from 'path';
-import {
-  VaultRootCredentials,
-  VaultAddons,
-  K8SRoleConfig,
-  K8SPolicyConfig
-} from './types';
 import { existsSync, readFileSync } from 'fs';
+import { resolve } from 'path';
+import * as yaml from 'yaml';
+
+import { cluster, provider } from '../cluster';
+import {
+  K8SPolicyConfig,
+  K8SRoleConfig,
+  VaultAddons,
+  VaultRootCredentials
+} from './types';
 
 interface VaultServerInputs {
   keyShares: pulumi.Input<number>;
   keyThreshold: pulumi.Input<number>;
   ingressHost: pulumi.Input<string>;
   ingressPort: pulumi.Input<number>;
-  addons: pulumi.Input<Array<VaultAddons> | undefined>;
+  addons?: pulumi.Input<Array<VaultAddons>>;
+  credentialsOutputPath?: pulumi.Input<string>;
 }
 
 export class K8SVaultServer extends pulumi.ComponentResource {

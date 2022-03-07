@@ -2,6 +2,7 @@ import axios from 'axios';
 import { execSync } from 'child_process';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
+
 import { VaultRootCredentials } from './types';
 
 function getVaultRootCredentialsFromFile(): VaultRootCredentials {

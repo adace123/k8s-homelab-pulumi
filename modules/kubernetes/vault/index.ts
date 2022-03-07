@@ -1,6 +1,7 @@
+import * as pulumi from '@pulumi/pulumi';
+
 import { K8SVaultServer } from './server';
 import { VaultAddons } from './types';
-import * as pulumi from '@pulumi/pulumi';
 
 const vaultConfig = new pulumi.Config('vault');
 const keyShares = vaultConfig.getNumber('key-shares') || 5;

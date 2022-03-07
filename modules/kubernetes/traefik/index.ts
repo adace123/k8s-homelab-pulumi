@@ -1,5 +1,6 @@
-import { provider } from '../cluster';
 import * as k8s from '@pulumi/kubernetes';
+
+import { provider } from '../cluster';
 
 export const traefik = new k8s.helm.v3.Release(
   'traefik',
