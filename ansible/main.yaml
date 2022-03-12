@@ -1,0 +1,38 @@
+- hosts: localhost
+  vars:
+    ingress_domain: k8s.dev
+  handlers:
+    - name: Restart dnsmasq
+      community.general.launchd:
+        name: homebrew.mxcl.dnsmasq
+        state: restarted
+        force_stop: true
+        enabled: true
+  tasks:
+    - name: Install system packages
+      community.general.homebrew:
+        name: '{{ item }}'
+        state: present
+      loop:
+        - kubectl
+        - pulumi
+        - vault
+        - curl
+        - dnsmasq
+        - argocd
+
+    - name: Install NPM packages
+      community.general.npm:
+        path: '{{ playbook_dir }}'
+
+    - name: Setup dnsmasq
+      community.general.launchd:
+        name: homebrew.mxcl.dnsmasq
+        state: started
+
+    - name: Update dnsmasq config file
+      ansible.builtin.lineinfile:
+        dest: /usr/local/etc/dnsmasq.conf
+        create: true
+        line: 'address=/{{ ingress_domain }}/127.0.0.1'
+      notify: Restart dnsmasq

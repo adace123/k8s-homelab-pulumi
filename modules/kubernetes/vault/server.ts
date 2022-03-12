@@ -37,7 +37,7 @@ export class K8SVaultServer extends pulumi.ComponentResource {
     const setupVaultcommand = new local.Command(
       'vault-init-command',
       {
-        create: `${resolve('.')}/modules/kubernetes/vault/run_vault_command.sh`,
+        create: `${resolve('.')}/modules/kubernetes/vault/run_vault_script.sh`,
         environment: {
           KUBECONFIG: cluster.kubeConfigPath,
           KUBECONTEXT: cluster.kubeContext,
@@ -114,7 +114,7 @@ export class K8SVaultServer extends pulumi.ComponentResource {
               },
               hosts: [
                 {
-                  host: 'vault.local.k8s',
+                  host: 'vault.k8s.local',
                   path: '/'
                 }
               ]
@@ -132,7 +132,7 @@ export class K8SVaultServer extends pulumi.ComponentResource {
     const serviceAccountToken = new local.Command(
       'vault-service-account-token',
       {
-        create: `${resolve('.')}/modules/kubernetes/vault/run_vault_command.sh`,
+        create: `${resolve('.')}/modules/kubernetes/vault/run_vault_script.sh`,
         environment: {
           COMMAND: `kubectl exec -it -n vault vault-0 -- cat /var/run/secrets/kubernetes.io/serviceaccount/token`,
           KUBECONFIG: cluster.kubeConfigPath,
@@ -142,7 +142,7 @@ export class K8SVaultServer extends pulumi.ComponentResource {
     );
 
     const caCert = new local.Command('vault-ca-cert', {
-      create: `${resolve('.')}/modules/kubernetes/vault/run_vault_command.sh`,
+      create: `${resolve('.')}/modules/kubernetes/vault/run_vault_script.sh`,
       environment: {
         COMMAND: `kubectl exec -it -n vault vault-0 -- cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt`,
         KUBECONFIG: cluster.kubeConfigPath,
