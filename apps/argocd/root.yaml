@@ -7,6 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com:adace123/k8s-homelab-pulumi.git
+    targetRevision: main
     path: apps
   destination:
     server: https://kubernetes.default.svc
