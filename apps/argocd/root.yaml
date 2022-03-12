@@ -1,12 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: argocd
+  name: root
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://github.com:adace123/k8s-homelab-pulumi.git
+    repoURL: https://github.com/adace123/k8s-homelab-pulumi.git
     targetRevision: main
     path: apps
   destination:
