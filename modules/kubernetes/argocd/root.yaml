@@ -9,6 +9,8 @@ spec:
     repoURL: https://github.com/adace123/k8s-homelab-pulumi.git
     targetRevision: main
     path: apps
+    directory:
+      recurse: true
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
