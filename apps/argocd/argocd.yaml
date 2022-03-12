@@ -4,16 +4,16 @@ metadata:
   name: argocd
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: '1'
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   source:
     repoURL: https://argoproj.github.io/argo-helm
-    targetRevision: v2.2.5
+    targetRevision: 3.35.4
     chart: argo-cd
     helm:
       releaseName: argocd
   destination:
-    namespace: default
+    namespace: argocd
     server: https://kubernetes.default.svc
   project: default
   syncPolicy:
