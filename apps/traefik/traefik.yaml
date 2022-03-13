@@ -11,7 +11,7 @@ spec:
     helm:
       releaseName: traefik
       valueFiles:
-        - apps/traefik/values-kind.yaml
+        - ./apps/traefik/values-kind.yaml
   destination:
     namespace: traefik
     server: https://kubernetes.default.svc
