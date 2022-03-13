@@ -20,6 +20,8 @@ spec:
         experimental:
           kubernetesGateway:
             enabled: true
+    kustomize:
+      version: v4.5.4
   destination:
     namespace: traefik
     server: https://kubernetes.default.svc

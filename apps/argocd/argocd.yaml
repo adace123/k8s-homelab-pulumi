@@ -10,6 +10,24 @@ spec:
     chart: argo-cd
     helm:
       releaseName: argocd
+      values: |
+        controller:
+          initContainers:
+            - name: download-kustomize
+              image: alpine:3.8
+              command: [sh, -c]
+              args:
+                - wget -qO- https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv4.5.2/kustomize_v4.5.2_linux_amd64.tar.gz \
+                  | tar -xvzf - && mv kustomize /custom-tools
+              volumeMounts:
+                - mountPath: /custom-tools
+                  name: custom-tools
+          volumeMounts:
+            - name: custom-tools
+              mountPath: /custom-tools
+          volumes:
+            - name: custom-tools
+              emptyDir: {}
   destination:
     namespace: argocd
     server: https://kubernetes.default.svc
