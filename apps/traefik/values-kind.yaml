@@ -1,0 +1,6 @@
+service:
+  type: NodePort
+ports:
+  web:
+    port: 8000
+    nodePort: 32500
