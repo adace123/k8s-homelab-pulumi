@@ -1,8 +1,10 @@
 config:
+  flux:agekey:
+    secure: AAABAEZjoc9nMzBPX2LQHJ5cNML5ryHvVQ+h58h7v84cHKX+Zrk2NIlLKZOVM0UFZLpBUe7HPE4r2+MB1ieqIjeisOty7A2vP4BTz+MWw+BPB4946M4WHoKycGdRKUXmt23V7Cx716v3SDfGLbIW1Hv/NiF/gKDmtC/Fhzyaebw//ua36JvH2HRt8HGD4tmgVtZEs+42b9tvhLleZuty/YhXS5p7x7oJ58EsYEsrrjMEb6eDxLKLdi+lQcr9DYKRyaXOd4AGdHrg5z+mQSEmnoGArR9ivtgY6VKykA==
   kind:cluster-name: pulumi
   vault:addons:
     - sidecar
   vault:ingress-host: vault.k8s.local
-  vault:ingress-port: '8000'
-  vault:key-shares: '5'
-  vault:key-threshold: '3'
+  vault:ingress-port: "8000"
+  vault:key-shares: "5"
+  vault:key-threshold: "3"

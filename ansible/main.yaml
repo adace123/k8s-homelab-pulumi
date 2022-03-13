@@ -11,7 +11,7 @@
   tasks:
     - name: Install system packages
       community.general.homebrew:
-        name: '{{ item }}'
+        name: "{{ item }}"
         state: present
       loop:
         - kubectl
@@ -19,11 +19,13 @@
         - vault
         - curl
         - dnsmasq
-        - argocd
+        - flux
+        - sops
+        - age
 
     - name: Install NPM packages
       community.general.npm:
-        path: '{{ playbook_dir }}'
+        path: "{{ playbook_dir }}"
 
     - name: Setup dnsmasq
       community.general.launchd:
@@ -34,5 +36,5 @@
       ansible.builtin.lineinfile:
         dest: /usr/local/etc/dnsmasq.conf
         create: true
-        line: 'address=/{{ ingress_domain }}/127.0.0.1'
+        line: "address=/{{ ingress_domain }}/127.0.0.1"
       notify: Restart dnsmasq
