@@ -17,6 +17,9 @@ spec:
           web:
             port: 8000
             nodePort: 32500
+        experimental:
+          kubernetesGateway:
+            enabled: true
   destination:
     namespace: traefik
     server: https://kubernetes.default.svc
