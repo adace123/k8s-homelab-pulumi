@@ -17,9 +17,6 @@ spec:
           web:
             port: 8000
             nodePort: 32500
-        experimental:
-          kubernetesGateway:
-            enabled: true
     kustomize:
       version: v4.5.4
   destination:
