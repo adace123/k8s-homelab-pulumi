@@ -1,3 +1,4 @@
+import { Command } from "@pulumi/command/local";
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 import { resolve } from "path";
@@ -20,26 +21,22 @@ export const flux = new k8s.helm.v3.Release(
 );
 
 const fluxConfig = new pulumi.Config("flux");
-const ageKey = fluxConfig.requireSecret("agekey");
+const gitRepoUrl = fluxConfig.require("repo-ssh-url");
+const sshKeyPath =
+  fluxConfig.getSecret("repo-private-key-path") || "~/.ssh/id_rsa";
 
-const ageKeySecret = new k8s.core.v1.Secret(
-  "age-key",
+const createGithubSecret = new Command(
+  "create-github-secret",
   {
-    metadata: {
-      name: "sops-age",
-      namespace: "flux-system"
-    },
-    stringData: {
-      "age.agekey": ageKey.apply((a) => a)
-    }
+    create: pulumi.interpolate`flux create secret git github-secret --url=${gitRepoUrl} --private-key-file=${sshKeyPath}`
   },
-  { provider, dependsOn: [flux], parent: flux }
+  { dependsOn: [flux], parent: flux }
 );
 
-const fluxRootApp = new k8s.kustomize.Directory(
+const fluxRepos = new k8s.kustomize.Directory(
   "flux-base",
   {
     directory: `${resolve(".")}/cluster/base`
   },
-  { provider, dependsOn: [ageKeySecret], parent: flux }
+  { provider, dependsOn: [createGithubSecret], parent: flux }
 );
