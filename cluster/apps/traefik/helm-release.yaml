@@ -6,6 +6,7 @@ metadata:
 spec:
   interval: 10m
   targetNamespace: traefik
+  releaseName: traefik
   chart:
     spec:
       chart: traefik
