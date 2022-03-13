@@ -10,8 +10,13 @@ spec:
     chart: traefik
     helm:
       releaseName: traefik
-      valueFiles:
-        - values-kind.yaml
+      values: |
+        service:
+          type: NodePort
+        ports:
+          web:
+            port: 8000
+            nodePort: 32500
   destination:
     namespace: traefik
     server: https://kubernetes.default.svc
