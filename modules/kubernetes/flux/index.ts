@@ -29,7 +29,7 @@ const ageKeySecret = new k8s.core.v1.Secret(
       name: "sops-age",
       namespace: "flux-system"
     },
-    data: {
+    stringData: {
       "age.agekey": ageKey.apply((a) => a)
     }
   },
