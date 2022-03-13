@@ -39,7 +39,7 @@ const ageKeySecret = new k8s.core.v1.Secret(
 const fluxRootApp = new k8s.kustomize.Directory(
   "flux-base",
   {
-    directory: `${resolve(".")}/cluster/bootstrap`
+    directory: `${resolve(".")}/cluster/base`
   },
   { provider, dependsOn: [ageKeySecret], parent: flux }
 );
