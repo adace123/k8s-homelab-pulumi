@@ -7,6 +7,6 @@ spec:
   interval: 1m0s
   ref:
     branch: main
-  secretRef:
-    name: github-secret
+  # secretRef:
+  #   name: github-secret
   url: ssh://git@github.com/adace123/k8s-homelab-pulumi
