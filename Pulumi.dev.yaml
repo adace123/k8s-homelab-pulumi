@@ -1,13 +1,3 @@
 config:
-  flux:agekey:
-    secure: AAABAEZjoc9nMzBPX2LQHJ5cNML5ryHvVQ+h58h7v84cHKX+Zrk2NIlLKZOVM0UFZLpBUe7HPE4r2+MB1ieqIjeisOty7A2vP4BTz+MWw+BPB4946M4WHoKycGdRKUXmt23V7Cx716v3SDfGLbIW1Hv/NiF/gKDmtC/Fhzyaebw//ua36JvH2HRt8HGD4tmgVtZEs+42b9tvhLleZuty/YhXS5p7x7oJ58EsYEsrrjMEb6eDxLKLdi+lQcr9DYKRyaXOd4AGdHrg5z+mQSEmnoGArR9ivtgY6VKykA==
-  flux:repo-private-key-path:
-    secure: AAABAPiMnCn/HlsmYiSsCOtWJ2WjjzLDqjiGJv/Zr5ul784b5BWH/QRbHlZIcAnyDWmx1wIq90CP3mTGk2AvM7uQ
-  flux:repo-ssh-url: ssh://git@github.com/adace123/k8s-homelab-pulumi
-  kind:cluster-name: pulumi
-  vault:addons:
-    - sidecar
-  vault:ingress-host: vault.k8s.local
-  vault:ingress-port: "8000"
-  vault:key-shares: "5"
-  vault:key-threshold: "3"
+  cluster:pulumiAccessToken:
+    secure: AAABANX4xbhZGQA1sZogl+K5ZgAWsoHKHgfVnro5jdOeqUWHIFV2XWkbIor8G7x1bEbPEc9Z3aIFhUSxs5uTaxD3RNEE97URpYv5YA==

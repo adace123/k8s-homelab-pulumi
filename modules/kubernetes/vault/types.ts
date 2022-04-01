@@ -11,10 +11,10 @@ export type VaultRootCredentials = {
 };
 
 export enum VaultAddons {
-  Sidecar = 'sidecar', // Sidecar secret injection
-  Csi = 'csi', // CSI secret volume mounts
-  KubernetesSecrets = 'kubernetes_secrets', // Vault Secret Operator
-  CertManager = 'cert-manager' // Dynamically generate certs via PKI engine
+  Sidecar = "sidecar", // Sidecar secret injection
+  Csi = "csi", // CSI secret volume mounts
+  KubernetesSecrets = "kubernetes_secrets", // Vault Secret Operator
+  CertManager = "cert-manager" // Dynamically generate certs via PKI engine
 }
 
 export type K8SPolicyConfig = {

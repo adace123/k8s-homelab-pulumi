@@ -1,3 +1,4 @@
-name: k8s-pulumi
+name: cluster
 runtime: nodejs
-description: A minimal Kubernetes TypeScript Pulumi program
+description: Bootstrap a Kubernetes cluster and Pulumi stack operator
+main: cluster/index.ts

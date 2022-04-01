@@ -1,2 +1,2 @@
-export { vaultServer } from './vault';
-export { traefik } from './traefik';
+export { vaultServer } from "./vault";
+export { traefik } from "./traefik";

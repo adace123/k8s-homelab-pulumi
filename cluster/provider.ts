@@ -1,7 +1,8 @@
-import * as pulumi from '@pulumi/pulumi';
-import { execSync } from 'child_process';
-import { createHash } from 'crypto';
-import { readFileSync, unlinkSync } from 'fs';
+import * as k8s from "@pulumi/kubernetes";
+import * as pulumi from "@pulumi/pulumi";
+import { execSync } from "child_process";
+import { createHash } from "crypto";
+import { readFileSync, unlinkSync } from "fs";
 
 interface KindResourceInputs {
   clusterName: pulumi.Input<string>;
@@ -18,21 +19,21 @@ interface KindProviderOutputs {
   kindConfigHash: string;
 }
 
-export class KindClusterProvider implements pulumi.dynamic.ResourceProvider {
+class KindClusterProvider implements pulumi.dynamic.ResourceProvider {
   getKindConfigHash(): string {
-    const kindConfig = readFileSync('./modules/kubernetes/kind.yaml');
-    const hash = createHash('md5');
+    const kindConfig = readFileSync("./config/kind.yaml");
+    const hash = createHash("md5");
     hash.update(kindConfig);
-    return hash.digest('hex');
+    return hash.digest("hex");
   }
 
   async create({
     clusterName
   }: KindProviderInputs): Promise<pulumi.dynamic.CreateResult> {
-    const kubeConfigPath = `./modules/kubernetes/${clusterName}-kubeconfig`;
-    const cmdString = `kind create cluster --name ${clusterName} --config ./modules/kubernetes/kind.yaml --kubeconfig=${kubeConfigPath}`;
+    const kubeConfigPath = `./${clusterName}-kubeconfig`;
+    const cmdString = `kind create cluster --name ${clusterName} --config ./config/kind.yaml --kubeconfig=${kubeConfigPath}`;
 
-    execSync(cmdString, { stdio: 'inherit' });
+    execSync(cmdString, { stdio: "inherit" });
 
     const kubeConfig = readFileSync(kubeConfigPath).toString();
 
@@ -75,14 +76,14 @@ export class KindClusterProvider implements pulumi.dynamic.ResourceProvider {
 
   async delete(id: string, _props: KindProviderInputs): Promise<void> {
     execSync(`kind delete cluster --name ${id}`, {
-      stdio: 'inherit'
+      stdio: "inherit"
     });
-    const kubeConfigPath = `./modules/kubernetes/${id}-kubeconfig`;
+    const kubeConfigPath = `./${id}-kubeconfig`;
     unlinkSync(kubeConfigPath);
   }
 }
 
-export class KindCluster extends pulumi.dynamic.Resource {
+class KindCluster extends pulumi.dynamic.Resource {
   public readonly kubeConfig!: pulumi.Output<string>;
   public readonly kubeConfigPath!: pulumi.Output<string>;
   public readonly kubeContext!: pulumi.Output<string>;
@@ -101,3 +102,18 @@ export class KindCluster extends pulumi.dynamic.Resource {
     );
   }
 }
+
+const config = new pulumi.Config("kind");
+const clusterName = config.get("cluster-name") || "pulumi";
+export const cluster = new KindCluster(clusterName, { clusterName });
+export const clusterProvider = new k8s.Provider(
+  "kind-k8s-provider",
+  {
+    kubeconfig: cluster.kubeConfig,
+    context: cluster.kubeContext
+  },
+  {
+    dependsOn: [cluster],
+    parent: cluster
+  }
+);

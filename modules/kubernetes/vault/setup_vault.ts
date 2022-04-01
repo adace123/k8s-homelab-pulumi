@@ -1,20 +1,20 @@
-import axios from 'axios';
-import { execSync } from 'child_process';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { resolve } from 'path';
+import axios from "axios";
+import { execSync } from "child_process";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { resolve } from "path";
 
-import { VaultRootCredentials } from './types';
+import { VaultRootCredentials } from "./types";
 
 function getVaultRootCredentialsFromFile(): VaultRootCredentials {
-  const vaultFileContent = readFileSync(resolve('./vault.json')).toString();
+  const vaultFileContent = readFileSync(resolve("./vault.json")).toString();
   return JSON.parse(vaultFileContent);
 }
 
 function unsealVault(vaultRootCredentials: VaultRootCredentials) {
-  const keyThreshold = parseInt(process.env['VAULT_KEY_THRESHOLD'] as string);
+  const keyThreshold = parseInt(process.env["VAULT_KEY_THRESHOLD"] as string);
   for (let i = 0; i < keyThreshold; i++) {
     execSync(
-      `kubectl --context=${process.env['KUBECONTEXT']} exec -n vault vault-0 -- vault operator unseal ${vaultRootCredentials.unseal_keys_b64[i]}`
+      `kubectl --context=${process.env["KUBECONTEXT"]} exec -n vault vault-0 -- vault operator unseal ${vaultRootCredentials.unseal_keys_b64[i]}`
     );
   }
 }
@@ -25,14 +25,14 @@ async function initializeVault(): Promise<VaultRootCredentials> {
     try {
       const vaultInitResult = execSync(
         `
-    		kubectl --context=${process.env['KUBECONTEXT']} exec -n vault vault-0 \
+    		kubectl --context=${process.env["KUBECONTEXT"]} exec -n vault vault-0 \
     		-- vault operator init \
-    		-key-shares=${process.env['VAULT_KEY_SHARES']} \
-    		-key-threshold=${process.env['VAULT_KEY_THRESHOLD']} -format=json
+    		-key-shares=${process.env["VAULT_KEY_SHARES"]} \
+    		-key-threshold=${process.env["VAULT_KEY_THRESHOLD"]} -format=json
     		`
       );
       process.stdout.write(vaultInitResult.toString());
-      writeFileSync(`${resolve('./vault.json')}`, vaultInitResult.toString());
+      writeFileSync(`${resolve("./vault.json")}`, vaultInitResult.toString());
       return JSON.parse(vaultInitResult.toString());
     } catch (error) {
       console.error(error);
@@ -48,7 +48,7 @@ async function initializeVault(): Promise<VaultRootCredentials> {
 
 (async () => {
   const vaultSealResponse = await axios.get(
-    `${process.env['VAULT_INGRESS_URL']}/v1/sys/seal-status`
+    `${process.env["VAULT_INGRESS_URL"]}/v1/sys/seal-status`
   );
   if (vaultSealResponse.status !== 200) {
     throw new Error(
@@ -65,7 +65,7 @@ async function initializeVault(): Promise<VaultRootCredentials> {
     vaultRootCredentials =
       vaultRootCredentials || getVaultRootCredentialsFromFile();
     unsealVault(vaultRootCredentials);
-  } else if (!existsSync(resolve('./vault.json'))) {
-    throw new Error('Vault root credentials not found!');
+  } else if (!existsSync(resolve("./vault.json"))) {
+    throw new Error("Vault root credentials not found!");
   }
 })();
