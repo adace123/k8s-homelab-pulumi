@@ -15,7 +15,7 @@ const pulumiSecret = new k8s.core.v1.Secret(
       name: "pulumi-secret"
     },
     stringData: {
-      token: pulumiAccessToken
+      accessToken: pulumiAccessToken
     }
   },
   { provider: clusterProvider }
@@ -45,8 +45,8 @@ export const homelabAppStack = new k8s.apiextensions.CustomResource(
     spec: {
       stack: "apps-dev",
       repoDir: "homelab-apps",
-      projectRepo: "https://github.com/adace123/k8s-pulumi",
-      branch: "refs/head/main",
+      projectRepo: "https://github.com/adace123/k8s-homelab-pulumi",
+      branch: "refs/heads/main",
       destroyOnFinalize: true,
       accessTokenSecret: pulumiSecret.metadata.name,
       gitAuth: {

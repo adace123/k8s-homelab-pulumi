@@ -13,12 +13,14 @@ const crds = new k8s.yaml.ConfigFile(
   },
   { provider: clusterProvider }
 );
+
 const operatorServiceAccount = new k8s.core.v1.ServiceAccount(
   "operator-service-account",
   {},
   { provider: clusterProvider }
 );
-const operatorRole = new k8s.rbac.v1.Role(
+
+const operatorRole = new k8s.rbac.v1.ClusterRole(
   "operator-role",
   {
     rules: [
@@ -77,17 +79,18 @@ const operatorRole = new k8s.rbac.v1.Role(
   { provider: clusterProvider }
 );
 
-const operatorRoleBinding = new k8s.rbac.v1.RoleBinding(
+const operatorRoleBinding = new k8s.rbac.v1.ClusterRoleBinding(
   "operator-role-binding",
   {
     subjects: [
       {
         kind: "ServiceAccount",
-        name: operatorServiceAccount.metadata.name
+        name: operatorServiceAccount.metadata.name,
+        namespace: "default"
       }
     ],
     roleRef: {
-      kind: "Role",
+      kind: "ClusterRole",
       name: operatorRole.metadata.name,
       apiGroup: "rbac.authorization.k8s.io"
     }
