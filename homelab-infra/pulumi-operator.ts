@@ -25,17 +25,8 @@ const operatorRole = new k8s.rbac.v1.ClusterRole(
   {
     rules: [
       {
-        apiGroups: [""],
-        resources: [
-          "pods",
-          "services",
-          "services/finalizers",
-          "endpoints",
-          "persistentvolumeclaims",
-          "events",
-          "configmaps",
-          "secrets"
-        ],
+        apiGroups: ["*"],
+        resources: ["*"],
         verbs: ["create", "delete", "get", "list", "patch", "update", "watch"]
       },
       {
