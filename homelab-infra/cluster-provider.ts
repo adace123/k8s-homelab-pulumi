@@ -21,7 +21,7 @@ interface KindProviderOutputs {
 
 class KindClusterProvider implements pulumi.dynamic.ResourceProvider {
   getKindConfigHash(): string {
-    const kindConfig = readFileSync("./config/kind.yaml");
+    const kindConfig = readFileSync("./cluster-config/kind.yaml");
     const hash = createHash("md5");
     hash.update(kindConfig);
     return hash.digest("hex");
@@ -31,7 +31,7 @@ class KindClusterProvider implements pulumi.dynamic.ResourceProvider {
     clusterName
   }: KindProviderInputs): Promise<pulumi.dynamic.CreateResult> {
     const kubeConfigPath = `./${clusterName}-kubeconfig`;
-    const cmdString = `kind create cluster --name ${clusterName} --config ./config/kind.yaml --kubeconfig=${kubeConfigPath}`;
+    const cmdString = `kind create cluster --name ${clusterName} --config ./cluster-config/kind.yaml --kubeconfig=${kubeConfigPath}`;
 
     execSync(cmdString, { stdio: "inherit" });
 

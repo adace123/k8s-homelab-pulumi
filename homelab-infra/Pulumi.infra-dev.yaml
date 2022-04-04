@@ -1,0 +1,5 @@
+config:
+  homelab-infra:githubToken:
+    secure: AAABAIvWVAMcfMxz3iekmNFrWhjp80MDgNdvVfN6dFax/+rjidPHmLy/q7LY+G3wO7VRyo65L3f+pz3Smr5p0DDstfegtpKC
+  homelab-infra:pulumiAccessToken:
+    secure: AAABALIHcjRXRZOtTDdOi9hm1lRdkEd8nKLzYawE3Zo5uZ01mzeGDn6bTk8XA8MsDoe9iirc0NkXvToMDYQLpFmOZ+ogZiaVzK8Jhw==

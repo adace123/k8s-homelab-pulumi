@@ -1,11 +1,15 @@
 import * as k8s from "@pulumi/kubernetes";
+import * as pulumi from "@pulumi/pulumi";
 
-import { clusterProvider } from "./provider";
+import { clusterProvider } from "./cluster-provider";
+
+const pulumiConfig = new pulumi.Config();
+const pulumiAccessToken = pulumiConfig.requireSecret("pulumiAccessToken");
 
 const crds = new k8s.yaml.ConfigFile(
   "crds",
   {
-    file: "https://raw.githubusercontent.com/pulumi/pulumi-k8s-operator/v1.5.0/deploy/crds/pulumi.com_stacks.yaml"
+    file: "https://github.com/pulumi/pulumi-kubernetes-operator/raw/master/deploy/crds/pulumi.com_stacks.yaml"
   },
   { provider: clusterProvider }
 );
@@ -112,7 +116,7 @@ export const operatorDeployment = new k8s.apps.v1.Deployment(
           containers: [
             {
               name: "pulumi-k8s-operator",
-              image: "pulumi/pulumi-k8s-operator:v1.5.0",
+              image: "pulumi/pulumi-kubernetes-operator:v1.5.0",
               args: ["--zap-level=error", "--zap-time-encoding=iso8601"],
               imagePullPolicy: "Always",
               env: [
@@ -143,6 +147,10 @@ export const operatorDeployment = new k8s.apps.v1.Deployment(
                 {
                   name: "MAX_CONCURRENT_RECONCILES",
                   value: "10"
+                },
+                {
+                  name: "PULUMI_ACCESS_TOKEN",
+                  value: pulumiAccessToken
                 }
               ]
             }

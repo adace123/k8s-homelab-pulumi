@@ -19,9 +19,7 @@
         - vault
         - curl
         - dnsmasq
-        - flux
-        - sops
-        - age
+        - lima
 
     - name: Install NPM packages
       community.general.npm:

@@ -1,4 +1,0 @@
-name: cluster
-runtime: nodejs
-description: Bootstrap a Kubernetes cluster and Pulumi stack operator
-main: cluster/index.ts
