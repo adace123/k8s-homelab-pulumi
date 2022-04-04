@@ -1,4 +1,3 @@
-import axios from "axios";
 import { execSync } from "child_process";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
