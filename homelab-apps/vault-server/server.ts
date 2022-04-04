@@ -59,22 +59,34 @@ export class K8SVaultServer extends pulumi.ComponentResource {
       return pulumi.secret(credentials as VaultRootCredentials);
     });
 
-    this.provider = new vault.Provider("k8s-vault-provider", {
-      token: this.credentials.root_token,
-      address: ingressUrl
-    });
+    this.provider = new vault.Provider(
+      "k8s-vault-provider",
+      {
+        token: this.credentials.root_token,
+        address: ingressUrl
+      },
+      { dependsOn: [release] }
+    );
 
-    const kvv2 = new vault.Mount("kv-v2-secrets-engine", {
-      path: "secret",
-      type: "kv-v2"
-    });
+    const kvv2 = new vault.Mount(
+      "kv-v2-secrets-engine",
+      {
+        path: "secret",
+        type: "kv-v2"
+      },
+      { dependsOn: [release] }
+    );
 
-    const audit = new vault.Audit("vault-audit", {
-      type: "file",
-      options: {
-        path: "/vault/logs/vault.log"
-      }
-    });
+    const audit = new vault.Audit(
+      "vault-audit",
+      {
+        type: "file",
+        options: {
+          path: "/vault/logs/vault.log"
+        }
+      },
+      { dependsOn: [release] }
+    );
   }
 
   createHelmRelease(enableInjection: boolean = true): k8s.helm.v3.Release {
