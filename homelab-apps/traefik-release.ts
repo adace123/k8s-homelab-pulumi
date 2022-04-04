@@ -1,5 +1,11 @@
 import * as k8s from "@pulumi/kubernetes";
 
+const namespace = new k8s.core.v1.Namespace("traefik", {
+  metadata: {
+    name: "traefik"
+  }
+});
+
 export const traefik = new k8s.helm.v3.Release("traefik", {
   chart: "traefik",
   name: "traefik",
