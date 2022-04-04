@@ -1,8 +1,10 @@
 import { execSync } from "child_process";
 import { existsSync, readFileSync, writeFileSync } from "fs";
-import { resolve } from "path";
+import path, { resolve } from "path";
 
 import { VaultRootCredentials } from "./types";
+
+const vaultJSONPath = path.join(__dirname, "vault.json");
 
 function getVaultRootCredentialsFromFile(): VaultRootCredentials {
   const vaultFileContent = readFileSync(resolve("./vault.json")).toString();
@@ -31,7 +33,7 @@ async function initializeVault(): Promise<VaultRootCredentials> {
     		`
       );
       process.stdout.write(vaultInitResult.toString());
-      writeFileSync(`${resolve("./vault.json")}`, vaultInitResult.toString());
+      writeFileSync(vaultJSONPath, vaultInitResult.toString());
       return JSON.parse(vaultInitResult.toString());
     } catch (error) {
       console.error(error);
@@ -66,7 +68,7 @@ async function initializeVault(): Promise<VaultRootCredentials> {
     vaultRootCredentials =
       vaultRootCredentials || getVaultRootCredentialsFromFile();
     unsealVault(vaultRootCredentials);
-  } else if (!existsSync(resolve("./vault.json"))) {
+  } else if (!existsSync(vaultJSONPath)) {
     throw new Error("Vault root credentials not found!");
   }
 })();

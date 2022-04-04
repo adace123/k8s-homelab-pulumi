@@ -4,6 +4,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
+import * as path from "path";
 import * as yaml from "yaml";
 
 import {
@@ -36,14 +37,12 @@ export class K8SVaultServer extends pulumi.ComponentResource {
     const setupVaultcommand = new local.Command(
       "vault-init-command",
       {
-        create: `${resolve(".")}/homelab-apps/vault-server/run_vault_script.sh`,
+        create: path.join(__dirname, "run_vault_script.sh"),
         environment: {
           VAULT_KEY_SHARES: inputs.keyShares.toString(),
           VAULT_KEY_THRESHOLD: inputs.keyThreshold.toString(),
           VAULT_INGRESS_URL: ingressUrl,
-          COMMAND: `npx ts-node ${resolve(
-            "."
-          )}/homelab-apps/vault-server/setup_vault.ts`
+          COMMAND: `npx ts-node ${path.join(__dirname, "setup_vault.ts")}`
         }
       },
       { dependsOn: [release], parent: release }
@@ -51,8 +50,10 @@ export class K8SVaultServer extends pulumi.ComponentResource {
 
     this.credentials = setupVaultcommand.stdout.apply((_) => {
       let credentials = {};
-      if (existsSync("./vault.json")) {
-        const vaultFileContents = readFileSync("./vault.json").toString();
+      if (existsSync(path.join(__dirname, "vault.json"))) {
+        const vaultFileContents = readFileSync(
+          path.join(__dirname, "vault.json")
+        ).toString();
         credentials = JSON.parse(vaultFileContents) as VaultRootCredentials;
       }
       return pulumi.secret(credentials as VaultRootCredentials);
@@ -129,7 +130,7 @@ export class K8SVaultServer extends pulumi.ComponentResource {
     const serviceAccountToken = new local.Command(
       "vault-service-account-token",
       {
-        create: `${resolve(".")}/homelab-apps/vault-server/run_vault_script.sh`,
+        create: path.join(__dirname, "run_vault_script.sh"),
         environment: {
           COMMAND: `kubectl exec -it -n vault vault-0 -- cat /var/run/secrets/kubernetes.io/serviceaccount/token`,
           VAULT_INGRESS_URL: ingressUrl
@@ -138,7 +139,7 @@ export class K8SVaultServer extends pulumi.ComponentResource {
     );
 
     const caCert = new local.Command("vault-ca-cert", {
-      create: `${resolve(".")}/homelab-apps/vault-server/run_vault_script.sh`,
+      create: path.join(__dirname, "run_vault_script.sh"),
       environment: {
         COMMAND: `kubectl exec -it -n vault vault-0 -- cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt`,
         VAULT_INGRESS_URL: ingressUrl
@@ -147,9 +148,7 @@ export class K8SVaultServer extends pulumi.ComponentResource {
     const policyResources: Array<vault.Policy> = [];
 
     const policies = yaml.parse(
-      readFileSync(
-        `${resolve(".")}/homelab-apps/vault-server/policies.yaml`
-      ).toString()
+      readFileSync(path.join(__dirname, "policies.yaml")).toString()
     ) as Array<K8SPolicyConfig>;
 
     for (const { name, policy } of policies) {
@@ -186,9 +185,7 @@ export class K8SVaultServer extends pulumi.ComponentResource {
     );
 
     const roles = yaml.parse(
-      readFileSync(
-        `${resolve(".")}/homelab-apps/vault-server/roles.yaml`
-      ).toString()
+      readFileSync(path.join(__dirname, "roles.yaml")).toString()
     ) as Array<K8SRoleConfig>;
 
     for (const role of roles) {
