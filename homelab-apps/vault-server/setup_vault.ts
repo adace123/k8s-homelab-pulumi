@@ -14,7 +14,7 @@ function unsealVault(vaultRootCredentials: VaultRootCredentials) {
   const keyThreshold = parseInt(process.env["VAULT_KEY_THRESHOLD"] as string);
   for (let i = 0; i < keyThreshold; i++) {
     execSync(
-      `kubectl --context=${process.env["KUBECONTEXT"]} exec -n vault vault-0 -- vault operator unseal ${vaultRootCredentials.unseal_keys_b64[i]}`
+      `kubectl exec -n vault vault-0 -- vault operator unseal ${vaultRootCredentials.unseal_keys_b64[i]}`
     );
   }
 }
@@ -25,7 +25,7 @@ async function initializeVault(): Promise<VaultRootCredentials> {
     try {
       const vaultInitResult = execSync(
         `
-    		kubectl --context=${process.env["KUBECONTEXT"]} exec -n vault vault-0 \
+    		kubectl exec -n vault vault-0 \
     		-- vault operator init \
     		-key-shares=${process.env["VAULT_KEY_SHARES"]} \
     		-key-threshold=${process.env["VAULT_KEY_THRESHOLD"]} -format=json
@@ -47,8 +47,10 @@ async function initializeVault(): Promise<VaultRootCredentials> {
 }
 
 (async () => {
-  const vaultSealResponse = await axios.get(
-    `${process.env["VAULT_INGRESS_URL"]}/v1/sys/seal-status`
+  const vaultSealResponse = JSON.parse(
+    execSync(
+      "kubectl exec -n vault vault-0 -- vault status -format=json"
+    ).toString()
   );
   if (vaultSealResponse.status !== 200) {
     throw new Error(

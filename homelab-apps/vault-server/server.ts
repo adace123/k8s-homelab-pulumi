@@ -6,7 +6,6 @@ import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import * as yaml from "yaml";
 
-import { cluster, provider } from "../cluster";
 import {
   K8SPolicyConfig,
   K8SRoleConfig,
@@ -37,14 +36,12 @@ export class K8SVaultServer extends pulumi.ComponentResource {
     const setupVaultcommand = new local.Command(
       "vault-init-command",
       {
-        create: `${resolve(".")}/modules/kubernetes/vault/run_vault_script.sh`,
+        create: `${resolve(".")}/homelab-apps/vault/run_vault_script.sh`,
         environment: {
-          KUBECONFIG: cluster.kubeConfigPath,
-          KUBECONTEXT: cluster.kubeContext,
           VAULT_KEY_SHARES: inputs.keyShares.toString(),
           VAULT_KEY_THRESHOLD: inputs.keyThreshold.toString(),
           VAULT_INGRESS_URL: ingressUrl,
-          COMMAND: "npx ts-node ./modules/kubernetes/vault/setup_vault.ts"
+          COMMAND: "npx ts-node ./homelab-apps/vault/setup_vault.ts"
         }
       },
       { dependsOn: [release], parent: release }
@@ -64,28 +61,26 @@ export class K8SVaultServer extends pulumi.ComponentResource {
       address: ingressUrl
     });
 
-    const kvv2 = new vault.Mount(
-      "kv-v2-secrets-engine",
-      {
-        path: "secret",
-        type: "kv-v2"
-      },
-      { provider: this.provider }
-    );
+    const kvv2 = new vault.Mount("kv-v2-secrets-engine", {
+      path: "secret",
+      type: "kv-v2"
+    });
 
-    const audit = new vault.Audit(
-      "vault-audit",
-      {
-        type: "file",
-        options: {
-          path: "/vault/logs/vault.log"
-        }
-      },
-      { provider: this.provider }
-    );
+    const audit = new vault.Audit("vault-audit", {
+      type: "file",
+      options: {
+        path: "/vault/logs/vault.log"
+      }
+    });
   }
 
   createHelmRelease(enableInjection: boolean = true): k8s.helm.v3.Release {
+    const namespace = new k8s.core.v1.Namespace("vault", {
+      metadata: {
+        name: "vault"
+      }
+    });
+
     return new k8s.helm.v3.Release(
       "vault",
       {
@@ -122,7 +117,7 @@ export class K8SVaultServer extends pulumi.ComponentResource {
           }
         }
       },
-      { provider, parent: this }
+      { parent: this }
     );
   }
 
@@ -132,20 +127,18 @@ export class K8SVaultServer extends pulumi.ComponentResource {
     const serviceAccountToken = new local.Command(
       "vault-service-account-token",
       {
-        create: `${resolve(".")}/modules/kubernetes/vault/run_vault_script.sh`,
+        create: `${resolve(".")}/homelab-apps/vault/run_vault_script.sh`,
         environment: {
           COMMAND: `kubectl exec -it -n vault vault-0 -- cat /var/run/secrets/kubernetes.io/serviceaccount/token`,
-          KUBECONFIG: cluster.kubeConfigPath,
           VAULT_INGRESS_URL: ingressUrl
         }
       }
     );
 
     const caCert = new local.Command("vault-ca-cert", {
-      create: `${resolve(".")}/modules/kubernetes/vault/run_vault_script.sh`,
+      create: `${resolve(".")}/homelab-apps/vault/run_vault_script.sh`,
       environment: {
         COMMAND: `kubectl exec -it -n vault vault-0 -- cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt`,
-        KUBECONFIG: cluster.kubeConfigPath,
         VAULT_INGRESS_URL: ingressUrl
       }
     });
@@ -153,7 +146,7 @@ export class K8SVaultServer extends pulumi.ComponentResource {
 
     const policies = yaml.parse(
       readFileSync(
-        `${resolve(".")}/modules/kubernetes/vault/policies.yaml`
+        `${resolve(".")}/homelab-apps/vault/policies.yaml`
       ).toString()
     ) as Array<K8SPolicyConfig>;
 
@@ -173,7 +166,7 @@ export class K8SVaultServer extends pulumi.ComponentResource {
       "kubernetes-auth-backend",
       {
         type: "kubernetes",
-        path: pulumi.interpolate`k8s-${cluster.kubeContext}`
+        path: "k8s"
       },
       { provider: this.provider }
     );
@@ -191,9 +184,7 @@ export class K8SVaultServer extends pulumi.ComponentResource {
     );
 
     const roles = yaml.parse(
-      readFileSync(
-        `${resolve(".")}/modules/kubernetes/vault/roles.yaml`
-      ).toString()
+      readFileSync(`${resolve(".")}/homelab-apps/vault/roles.yaml`).toString()
     ) as Array<K8SRoleConfig>;
 
     for (const role of roles) {
