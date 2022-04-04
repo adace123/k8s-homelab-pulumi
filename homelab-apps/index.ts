@@ -1,3 +1,3 @@
 import * as pulumi from "@pulumi/pulumi";
 
-export { traefik } from "./traefik";
+export { traefik } from "./traefik-release";
