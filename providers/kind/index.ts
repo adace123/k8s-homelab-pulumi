@@ -1,7 +1,7 @@
-import * as pulumi from '@pulumi/pulumi';
-import { execSync } from 'child_process';
-import { createHash } from 'crypto';
-import { readFileSync, unlinkSync } from 'fs';
+import * as pulumi from "@pulumi/pulumi";
+import { execSync } from "child_process";
+import { createHash } from "crypto";
+import { readFileSync, unlinkSync } from "fs";
 
 interface KindResourceInputs {
   clusterName: pulumi.Input<string>;
@@ -20,10 +20,10 @@ interface KindProviderOutputs {
 
 export class KindClusterProvider implements pulumi.dynamic.ResourceProvider {
   getKindConfigHash(): string {
-    const kindConfig = readFileSync('./modules/kubernetes/kind.yaml');
-    const hash = createHash('md5');
+    const kindConfig = readFileSync("./modules/kubernetes/kind.yaml");
+    const hash = createHash("md5");
     hash.update(kindConfig);
-    return hash.digest('hex');
+    return hash.digest("hex");
   }
 
   async create({
@@ -32,7 +32,7 @@ export class KindClusterProvider implements pulumi.dynamic.ResourceProvider {
     const kubeConfigPath = `./modules/kubernetes/${clusterName}-kubeconfig`;
     const cmdString = `kind create cluster --name ${clusterName} --config ./modules/kubernetes/kind.yaml --kubeconfig=${kubeConfigPath}`;
 
-    execSync(cmdString, { stdio: 'inherit' });
+    execSync(cmdString, { stdio: "inherit" });
 
     const kubeConfig = readFileSync(kubeConfigPath).toString();
 
@@ -75,7 +75,7 @@ export class KindClusterProvider implements pulumi.dynamic.ResourceProvider {
 
   async delete(id: string, _props: KindProviderInputs): Promise<void> {
     execSync(`kind delete cluster --name ${id}`, {
-      stdio: 'inherit'
+      stdio: "inherit"
     });
     const kubeConfigPath = `./modules/kubernetes/${id}-kubeconfig`;
     unlinkSync(kubeConfigPath);

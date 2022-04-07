@@ -20,8 +20,6 @@
         - curl
         - dnsmasq
         - flux
-        - sops
-        - age
 
     - name: Install NPM packages
       community.general.npm:

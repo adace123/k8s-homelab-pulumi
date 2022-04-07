@@ -1,18 +1,18 @@
-import { local } from '@pulumi/command';
-import * as k8s from '@pulumi/kubernetes';
-import * as pulumi from '@pulumi/pulumi';
-import * as vault from '@pulumi/vault';
-import { existsSync, readFileSync } from 'fs';
-import { resolve } from 'path';
-import * as yaml from 'yaml';
+import { local } from "@pulumi/command";
+import * as k8s from "@pulumi/kubernetes";
+import * as pulumi from "@pulumi/pulumi";
+import * as vault from "@pulumi/vault";
+import { existsSync, readFileSync } from "fs";
+import { resolve } from "path";
+import * as yaml from "yaml";
 
-import { cluster, provider } from '../cluster';
+import { cluster, provider } from "../cluster";
 import {
   K8SPolicyConfig,
   K8SRoleConfig,
   VaultAddons,
   VaultRootCredentials
-} from './types';
+} from "./types";
 
 interface VaultServerInputs {
   keyShares: pulumi.Input<number>;
@@ -35,16 +35,16 @@ export class K8SVaultServer extends pulumi.ComponentResource {
     const ingressUrl = `http://${inputs.ingressHost}:${inputs.ingressPort}`;
 
     const setupVaultcommand = new local.Command(
-      'vault-init-command',
+      "vault-init-command",
       {
-        create: `${resolve('.')}/modules/kubernetes/vault/run_vault_script.sh`,
+        create: `${resolve(".")}/modules/kubernetes/vault/run_vault_script.sh`,
         environment: {
           KUBECONFIG: cluster.kubeConfigPath,
           KUBECONTEXT: cluster.kubeContext,
           VAULT_KEY_SHARES: inputs.keyShares.toString(),
           VAULT_KEY_THRESHOLD: inputs.keyThreshold.toString(),
           VAULT_INGRESS_URL: ingressUrl,
-          COMMAND: 'npx ts-node ./modules/kubernetes/vault/setup_vault.ts'
+          COMMAND: "npx ts-node ./modules/kubernetes/vault/setup_vault.ts"
         }
       },
       { dependsOn: [release], parent: release }
@@ -52,33 +52,33 @@ export class K8SVaultServer extends pulumi.ComponentResource {
 
     this.credentials = setupVaultcommand.stdout.apply((_) => {
       let credentials = {};
-      if (existsSync('./vault.json')) {
-        const vaultFileContents = readFileSync('./vault.json').toString();
+      if (existsSync("./vault.json")) {
+        const vaultFileContents = readFileSync("./vault.json").toString();
         credentials = JSON.parse(vaultFileContents) as VaultRootCredentials;
       }
       return pulumi.secret(credentials as VaultRootCredentials);
     });
 
-    this.provider = new vault.Provider('k8s-vault-provider', {
+    this.provider = new vault.Provider("k8s-vault-provider", {
       token: this.credentials.root_token,
       address: ingressUrl
     });
 
     const kvv2 = new vault.Mount(
-      'kv-v2-secrets-engine',
+      "kv-v2-secrets-engine",
       {
-        path: 'secret',
-        type: 'kv-v2'
+        path: "secret",
+        type: "kv-v2"
       },
       { provider: this.provider }
     );
 
     const audit = new vault.Audit(
-      'vault-audit',
+      "vault-audit",
       {
-        type: 'file',
+        type: "file",
         options: {
-          path: '/vault/logs/vault.log'
+          path: "/vault/logs/vault.log"
         }
       },
       { provider: this.provider }
@@ -87,21 +87,21 @@ export class K8SVaultServer extends pulumi.ComponentResource {
 
   createHelmRelease(enableInjection: boolean = true): k8s.helm.v3.Release {
     return new k8s.helm.v3.Release(
-      'vault',
+      "vault",
       {
-        chart: 'vault',
-        version: '0.19.0',
-        namespace: 'vault',
-        name: 'vault',
+        chart: "vault",
+        version: "0.19.0",
+        namespace: "vault",
+        name: "vault",
         skipAwait: true, // Vault pod will not pass readiness probe until server is initialized and unsealed
         createNamespace: true,
         repositoryOpts: {
-          repo: 'https://helm.releases.hashicorp.com'
+          repo: "https://helm.releases.hashicorp.com"
         },
         values: {
           server: {
             serviceAccount: {
-              name: 'vault'
+              name: "vault"
             },
             injector: {
               enabled: enableInjection
@@ -110,12 +110,12 @@ export class K8SVaultServer extends pulumi.ComponentResource {
               enabled: true,
               annotations: {
                 // Workaround for https://github.com/pulumi/pulumi-kubernetes/issues/1812
-                'pulumi.com/skipAwait': 'true'
+                "pulumi.com/skipAwait": "true"
               },
               hosts: [
                 {
-                  host: 'vault.k8s.local',
-                  path: '/'
+                  host: "vault.k8s.local",
+                  path: "/"
                 }
               ]
             }
@@ -130,9 +130,9 @@ export class K8SVaultServer extends pulumi.ComponentResource {
     const ingressUrl = `http://${inputs.ingressHost}:${inputs.ingressPort}`;
 
     const serviceAccountToken = new local.Command(
-      'vault-service-account-token',
+      "vault-service-account-token",
       {
-        create: `${resolve('.')}/modules/kubernetes/vault/run_vault_script.sh`,
+        create: `${resolve(".")}/modules/kubernetes/vault/run_vault_script.sh`,
         environment: {
           COMMAND: `kubectl exec -it -n vault vault-0 -- cat /var/run/secrets/kubernetes.io/serviceaccount/token`,
           KUBECONFIG: cluster.kubeConfigPath,
@@ -141,8 +141,8 @@ export class K8SVaultServer extends pulumi.ComponentResource {
       }
     );
 
-    const caCert = new local.Command('vault-ca-cert', {
-      create: `${resolve('.')}/modules/kubernetes/vault/run_vault_script.sh`,
+    const caCert = new local.Command("vault-ca-cert", {
+      create: `${resolve(".")}/modules/kubernetes/vault/run_vault_script.sh`,
       environment: {
         COMMAND: `kubectl exec -it -n vault vault-0 -- cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt`,
         KUBECONFIG: cluster.kubeConfigPath,
@@ -153,7 +153,7 @@ export class K8SVaultServer extends pulumi.ComponentResource {
 
     const policies = yaml.parse(
       readFileSync(
-        `${resolve('.')}/modules/kubernetes/vault/policies.yaml`
+        `${resolve(".")}/modules/kubernetes/vault/policies.yaml`
       ).toString()
     ) as Array<K8SPolicyConfig>;
 
@@ -170,29 +170,29 @@ export class K8SVaultServer extends pulumi.ComponentResource {
     }
 
     const k8sAuthBackend = new vault.AuthBackend(
-      'kubernetes-auth-backend',
+      "kubernetes-auth-backend",
       {
-        type: 'kubernetes',
+        type: "kubernetes",
         path: pulumi.interpolate`k8s-${cluster.kubeContext}`
       },
       { provider: this.provider }
     );
 
     const k8sAuthBackendConfig = new vault.kubernetes.AuthBackendConfig(
-      'kubernetes-auth-backend-config',
+      "kubernetes-auth-backend-config",
       {
         backend: k8sAuthBackend.path,
-        kubernetesHost: 'https://kubernetes.default.svc.cluster.local:443',
+        kubernetesHost: "https://kubernetes.default.svc.cluster.local:443",
         tokenReviewerJwt: serviceAccountToken.stdout,
         kubernetesCaCert: caCert.stdout,
-        issuer: 'https://kubernetes.default.svc.cluster.local'
+        issuer: "https://kubernetes.default.svc.cluster.local"
       },
       { provider: this.provider }
     );
 
     const roles = yaml.parse(
       readFileSync(
-        `${resolve('.')}/modules/kubernetes/vault/roles.yaml`
+        `${resolve(".")}/modules/kubernetes/vault/roles.yaml`
       ).toString()
     ) as Array<K8SRoleConfig>;
 
@@ -203,8 +203,8 @@ export class K8SVaultServer extends pulumi.ComponentResource {
           backend: k8sAuthBackend.path,
           roleName: role.name,
           tokenPolicies: role.policies,
-          boundServiceAccountNamespaces: role.namespaces || ['*'],
-          boundServiceAccountNames: role.serviceAccounts || ['*']
+          boundServiceAccountNamespaces: role.namespaces || ["*"],
+          boundServiceAccountNames: role.serviceAccounts || ["*"]
         },
         { dependsOn: policyResources, provider: this.provider }
       );
@@ -228,7 +228,7 @@ export class K8SVaultServer extends pulumi.ComponentResource {
     inputs: VaultServerInputs,
     opts?: pulumi.ComponentResourceOptions
   ) {
-    super('vault-k8s-server', name, {}, opts);
+    super("vault-k8s-server", name, {}, opts);
     this.initializeVault(inputs);
 
     if (inputs.addons) {

@@ -1,6 +1,6 @@
 config:
   flux:repo-private-key-path:
-    secure: AAABAPiMnCn/HlsmYiSsCOtWJ2WjjzLDqjiGJv/Zr5ul784b5BWH/QRbHlZIcAnyDWmx1wIq90CP3mTGk2AvM7uQ
+    secure: AAABAPWDjY96cGfKY03jHUwjjULRLW8+z09Q+TtItP9ZqMHnTQwxDbt2x1RnsfoNVbXfC+fTwtwWMivDXuG71keG
   flux:repo-ssh-url: ssh://git@github.com/adace123/k8s-homelab-pulumi
   kind:cluster-name: pulumi
   vault:addons:

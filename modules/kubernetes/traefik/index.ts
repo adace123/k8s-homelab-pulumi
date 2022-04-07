@@ -1,23 +1,23 @@
-import * as k8s from '@pulumi/kubernetes';
+import * as k8s from "@pulumi/kubernetes";
 
-import { provider } from '../cluster';
+import { provider } from "../cluster";
 
 export const traefik = new k8s.helm.v3.Release(
-  'traefik',
+  "traefik",
   {
-    chart: 'traefik',
-    name: 'traefik',
-    version: '10.14.2',
-    namespace: 'traefik',
+    chart: "traefik",
+    name: "traefik",
+    version: "10.14.2",
+    namespace: "traefik",
     createNamespace: true,
     repositoryOpts: {
-      repo: 'https://helm.traefik.io/traefik'
+      repo: "https://helm.traefik.io/traefik"
     },
     values: {
       service: {
-        type: 'NodePort',
+        type: "NodePort",
         annotations: {
-          'pulumi.com/skipAwait': 'true'
+          "pulumi.com/skipAwait": "true"
         }
       },
       ports: {
@@ -39,18 +39,18 @@ export const traefik = new k8s.helm.v3.Release(
 );
 
 const traefikDashboardService = new k8s.core.v1.Service(
-  'traefik-dashboard-service',
+  "traefik-dashboard-service",
   {
     metadata: {
-      name: 'traefik-dashboard',
-      namespace: 'traefik',
+      name: "traefik-dashboard",
+      namespace: "traefik",
       annotations: {
-        'pulumi.com/skipAwait': 'true'
+        "pulumi.com/skipAwait": "true"
       }
     },
     spec: {
       selector: {
-        'app.kubernetes.io/name': 'traefik'
+        "app.kubernetes.io/name": "traefik"
       },
       ports: [
         {
@@ -64,25 +64,25 @@ const traefikDashboardService = new k8s.core.v1.Service(
 );
 
 const traefikIngress = new k8s.networking.v1.Ingress(
-  'traefik-dashboard-ingress',
+  "traefik-dashboard-ingress",
   {
     metadata: {
-      name: 'traefik-dashboard',
-      namespace: 'traefik',
+      name: "traefik-dashboard",
+      namespace: "traefik",
       annotations: {
         // Workaround for https://github.com/pulumi/pulumi-kubernetes/issues/1812
-        'pulumi.com/skipAwait': 'true'
+        "pulumi.com/skipAwait": "true"
       }
     },
     spec: {
       rules: [
         {
-          host: 'traefik.local.k8s',
+          host: "traefik.local.k8s",
           http: {
             paths: [
               {
-                path: '/',
-                pathType: 'Prefix',
+                path: "/",
+                pathType: "Prefix",
                 backend: {
                   service: {
                     name: traefikDashboardService.metadata.name,
