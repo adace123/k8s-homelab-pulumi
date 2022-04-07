@@ -5,12 +5,8 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
-  path: ./cluster/base/repos
+  path: ./cluster/repos
   prune: true
   sourceRef:
     kind: GitRepository
     name: k8s-homelab-repo
-  decryption:
-    provider: sops
-    secretRef:
-      name: sops-age
