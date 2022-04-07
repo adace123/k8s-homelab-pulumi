@@ -23,8 +23,14 @@ const fluxRelease = new k8s.helm.v3.Release(
 
 interface FluxKustomizationInputs {
   name: string;
-  directory: string;
+  remoteDir: string;
   readyTimeoutSeconds?: number;
+  repoSource?: string;
+}
+
+interface FluxKustomizationOutputs {
+  localDir: string;
+  name: string;
 }
 
 const fluxConfig = new pulumi.Config("flux");
@@ -32,6 +38,9 @@ const gitRepoUrl = fluxConfig.require("repo-ssh-url");
 const sshKeyPath =
   fluxConfig.getSecret("repo-private-key-path") || "~/.ssh/id_rsa";
 
+/* 
+Minimal bootstraping for the Flux controller
+*/
 const createGithubSecret = new Command(
   "create-github-secret",
   {
@@ -40,52 +49,86 @@ const createGithubSecret = new Command(
   { dependsOn: [fluxRelease], parent: fluxRelease }
 );
 
+const githubSource = new k8s.yaml.ConfigFile(
+  "github-source",
+  {
+    file: `${resolve(".")}/cluster/repos/git/k8s-homelab-repo.yaml`
+  },
+  { provider, dependsOn: [fluxRelease], parent: fluxRelease }
+);
+
 class FluxKustomizationProvider implements pulumi.dynamic.ResourceProvider {
-  check?:
-    | ((olds: any, news: any) => Promise<pulumi.dynamic.CheckResult>)
-    | undefined;
-  diff?:
-    | ((id: string, olds: any, news: any) => Promise<pulumi.dynamic.DiffResult>)
-    | undefined;
+  async diff(
+    id: string,
+    _olds: FluxKustomizationOutputs,
+    news: FluxKustomizationOutputs
+  ): Promise<pulumi.dynamic.DiffResult> {
+    try {
+      execSync(`flux diff kustomization ${news.name} --path=${news.localDir}`, {
+        stdio: "inherit"
+      });
+      return { changes: false };
+    } catch (e) {
+      return { changes: true };
+    }
+  }
+
   async create(
     inputs: FluxKustomizationInputs
   ): Promise<pulumi.dynamic.CreateResult> {
-    const kustomizeApply = new k8s.kustomize.Directory(
-      `kustomization-${inputs.name}`,
-      {
-        directory: inputs.directory.toString()
-      },
-      { provider, dependsOn: [createGithubSecret], parent: fluxRelease }
-    );
+    const repoSource = inputs.repoSource || "k8s-homelab-repo";
+    const timeout = inputs.readyTimeoutSeconds || 60;
 
-    execSync("kubectl wait ");
+    const kustomizeCreateCommand = `flux create kustomization ${inputs.name} --source=${repoSource} --path=${inputs.remoteDir} --wait --timeout=${timeout}s`;
+    execSync(kustomizeCreateCommand, { stdio: "inherit" });
+
     return {
       id: inputs.name,
       outs: {
-        kustomizationId: kustomizeApply.getCustomResource(
-          inputs.name,
-          "flux-system"
-        ).id
+        directory: `${resolve(".")}/${inputs.remoteDir}`,
+        name: inputs.name
       }
     };
   }
-  read?:
-    | ((id: string, props?: any) => Promise<pulumi.dynamic.ReadResult>)
-    | undefined;
-  update?:
-    | ((
-        id: string,
-        olds: any,
-        news: any
-      ) => Promise<pulumi.dynamic.UpdateResult>)
-    | undefined;
-  delete?: ((id: string, props: any) => Promise<void>) | undefined;
+
+  async update(
+    id: string,
+    _olds: FluxKustomizationInputs,
+    _news: FluxKustomizationInputs
+  ): Promise<pulumi.dynamic.UpdateResult> {
+    execSync(`flux reconcile kustomization ${id}`, { stdio: "inherit" });
+    return {};
+  }
+
+  async delete(id: string, props: FluxKustomizationInputs): Promise<void> {
+    execSync(`flux delete kustomization ${props.name}`, { stdio: "inherit" });
+  }
 }
 
-export const fluxRepoKustomization = new k8s.kustomize.Directory(
+class FluxKustomization extends pulumi.dynamic.Resource {
+  constructor(
+    name: string,
+    props: FluxKustomizationInputs,
+    opts?: pulumi.CustomResourceOptions
+  ) {
+    super(new FluxKustomizationProvider(), name, { ...props }, opts);
+  }
+}
+
+export const fluxRepoKustomization = new FluxKustomization(
   "flux-repos",
   {
-    directory: `${resolve(".")}/cluster/repos`
+    name: "flux-repos",
+    remoteDir: "cluster/repos"
   },
-  { provider, dependsOn: [createGithubSecret], parent: fluxRelease }
+  { dependsOn: [githubSource], parent: fluxRelease }
+);
+
+export const fluxInfraKustomization = new FluxKustomization(
+  "flux-infra",
+  {
+    name: "flux-infra",
+    remoteDir: "cluster/infra"
+  },
+  { dependsOn: [fluxRepoKustomization], parent: fluxRelease }
 );
