@@ -1,10 +1,14 @@
 import * as pulumi from "@pulumi/pulumi";
 
 import { cluster } from "./modules/kubernetes/cluster";
-import { fluxRepoKustomization } from "./modules/kubernetes/flux";
+import {
+  fluxInfraKustomization,
+  fluxRepoKustomization
+} from "./modules/kubernetes/flux";
 
 export = {
   kubeconfig: pulumi.secret(cluster.kubeConfig),
-  fluxRepoKustomization: fluxRepoKustomization.resources
+  fluxRepoKustomization: fluxRepoKustomization,
+  fluxInfraKustomization
   // vaultToken: vaultServer.credentials.root_token,
 };
