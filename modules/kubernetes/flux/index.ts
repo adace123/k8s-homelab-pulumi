@@ -59,7 +59,7 @@ const githubSource = new k8s.yaml.ConfigFile(
 
 class FluxKustomizationProvider implements pulumi.dynamic.ResourceProvider {
   async diff(
-    id: string,
+    _id: string,
     _olds: FluxKustomizationOutputs,
     news: FluxKustomizationOutputs
   ): Promise<pulumi.dynamic.DiffResult> {
@@ -79,6 +79,7 @@ class FluxKustomizationProvider implements pulumi.dynamic.ResourceProvider {
     const repoSource = inputs.repoSource || "k8s-homelab-repo";
     const timeout = inputs.readyTimeoutSeconds || 60;
 
+    execSync(`flux reconcile source git ${repoSource}`);
     const kustomizeCreateCommand = `flux create kustomization ${inputs.name} --source=${repoSource} --path=${inputs.remoteDir} --wait --timeout=${timeout}s`;
     execSync(kustomizeCreateCommand, { stdio: "inherit" });
 
@@ -94,13 +95,15 @@ class FluxKustomizationProvider implements pulumi.dynamic.ResourceProvider {
   async update(
     id: string,
     _olds: FluxKustomizationInputs,
-    _news: FluxKustomizationInputs
+    news: FluxKustomizationInputs
   ): Promise<pulumi.dynamic.UpdateResult> {
+    const repoSource = news.repoSource || "k8s-homelab-repo";
+    execSync(`flux reconcile source git ${repoSource}`);
     execSync(`flux reconcile kustomization ${id}`, { stdio: "inherit" });
     return {};
   }
 
-  async delete(id: string, props: FluxKustomizationInputs): Promise<void> {
+  async delete(_id: string, props: FluxKustomizationInputs): Promise<void> {
     execSync(`flux delete kustomization ${props.name}`, { stdio: "inherit" });
   }
 }
