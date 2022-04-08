@@ -5,7 +5,12 @@ import { KindCluster } from "../../providers/kind";
 
 const config = new pulumi.Config("kind");
 const clusterName = config.get("cluster-name") || "pulumi";
-export const cluster = new KindCluster(clusterName, { clusterName });
+export const kubeconfigPath =
+  config.get("kubeconfigPath") || `./${clusterName}-kubeconfig`;
+export const cluster = new KindCluster(clusterName, {
+  clusterName,
+  kubeconfigPath
+});
 
 export const provider = new k8s.Provider(
   "kind-k8s-provider",

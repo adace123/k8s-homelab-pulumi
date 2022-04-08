@@ -4,7 +4,7 @@ import * as pulumi from "@pulumi/pulumi";
 import { execSync } from "child_process";
 import { resolve } from "path";
 
-import { provider } from "../cluster";
+import { cluster, kubeconfigPath, provider } from "../cluster";
 
 const fluxRelease = new k8s.helm.v3.Release(
   "flux",
@@ -18,12 +18,12 @@ const fluxRelease = new k8s.helm.v3.Release(
       repo: "https://fluxcd-community.github.io/helm-charts"
     }
   },
-  { provider }
+  { provider, parent: cluster }
 );
 
 interface FluxKustomizationInputs {
   name: string;
-  remoteDir: string;
+  directory: string;
   readyTimeoutSeconds?: number;
   repoSource?: string;
 }
@@ -44,7 +44,7 @@ Minimal bootstraping for the Flux controller
 const createGithubSecret = new Command(
   "create-github-secret",
   {
-    create: pulumi.interpolate`flux create secret git github-secret --url=${gitRepoUrl} --private-key-file=${sshKeyPath}`
+    create: pulumi.interpolate`flux create secret git github-secret --url=${gitRepoUrl} --private-key-file=${sshKeyPath} --kubeconfig=${kubeconfigPath}`
   },
   { dependsOn: [fluxRelease], parent: fluxRelease }
 );
@@ -54,7 +54,7 @@ const githubSource = new k8s.yaml.ConfigFile(
   {
     file: `${resolve(".")}/cluster/repos/git/k8s-homelab-repo.yaml`
   },
-  { provider, dependsOn: [fluxRelease], parent: fluxRelease }
+  { provider, dependsOn: [createGithubSecret], parent: fluxRelease }
 );
 
 class FluxKustomizationProvider implements pulumi.dynamic.ResourceProvider {
@@ -64,9 +64,12 @@ class FluxKustomizationProvider implements pulumi.dynamic.ResourceProvider {
     news: FluxKustomizationOutputs
   ): Promise<pulumi.dynamic.DiffResult> {
     try {
-      execSync(`flux diff kustomization ${news.name} --path=${news.localDir}`, {
-        stdio: "inherit"
-      });
+      execSync(
+        `flux diff kustomization ${news.name} --path=${news.localDir} --kubeconfig=${kubeconfigPath}`,
+        {
+          stdio: "inherit"
+        }
+      );
       return { changes: false };
     } catch (e) {
       return { changes: true };
@@ -79,14 +82,28 @@ class FluxKustomizationProvider implements pulumi.dynamic.ResourceProvider {
     const repoSource = inputs.repoSource || "k8s-homelab-repo";
     const timeout = inputs.readyTimeoutSeconds || 60;
 
-    execSync(`flux reconcile source git ${repoSource}`);
-    const kustomizeCreateCommand = `flux create kustomization ${inputs.name} --source=${repoSource} --path=${inputs.remoteDir} --wait --timeout=${timeout}s`;
+    execSync(
+      `flux reconcile source git ${repoSource} --kubeconfig=${kubeconfigPath}`
+    );
+
+    const kustomizeCreateCommand = `
+      flux create kustomization ${inputs.name} \
+      --source=${repoSource} \
+      --path=${inputs.directory} \
+      --wait \
+      --timeout=${timeout}s \
+      --kubeconfig=${kubeconfigPath}`;
     execSync(kustomizeCreateCommand, { stdio: "inherit" });
+
+    execSync(
+      `flux reconcile kustomization ${inputs.name} --kubeconfig=${kubeconfigPath}`,
+      { stdio: "inherit" }
+    );
 
     return {
       id: inputs.name,
       outs: {
-        directory: `${resolve(".")}/${inputs.remoteDir}`,
+        directory: `${resolve(".")}/${inputs.directory}`,
         name: inputs.name
       }
     };
@@ -98,13 +115,21 @@ class FluxKustomizationProvider implements pulumi.dynamic.ResourceProvider {
     news: FluxKustomizationInputs
   ): Promise<pulumi.dynamic.UpdateResult> {
     const repoSource = news.repoSource || "k8s-homelab-repo";
-    execSync(`flux reconcile source git ${repoSource}`);
-    execSync(`flux reconcile kustomization ${id}`, { stdio: "inherit" });
+    execSync(
+      `flux reconcile source git ${repoSource} --kubeconfig=${kubeconfigPath}`
+    );
+    execSync(
+      `flux reconcile kustomization ${id} --kubeconfig=${kubeconfigPath}`,
+      { stdio: "inherit" }
+    );
     return {};
   }
 
-  async delete(_id: string, props: FluxKustomizationInputs): Promise<void> {
-    execSync(`flux delete kustomization ${props.name}`, { stdio: "inherit" });
+  async delete(_id: string, inputs: FluxKustomizationInputs): Promise<void> {
+    execSync(
+      `yes | flux delete kustomization ${inputs.name} --kubeconfig=${kubeconfigPath}`,
+      { stdio: "inherit" }
+    );
   }
 }
 
@@ -119,19 +144,19 @@ class FluxKustomization extends pulumi.dynamic.Resource {
 }
 
 export const fluxRepoKustomization = new FluxKustomization(
-  "flux-repos",
+  "flux-repo-kustomization",
   {
     name: "flux-repos",
-    remoteDir: "cluster/repos"
+    directory: "cluster/repos"
   },
   { dependsOn: [githubSource], parent: fluxRelease }
 );
 
 export const fluxInfraKustomization = new FluxKustomization(
-  "flux-infra",
+  "flux-infra-kustomization",
   {
     name: "flux-infra",
-    remoteDir: "cluster/infra"
+    directory: "cluster/infra"
   },
   { dependsOn: [fluxRepoKustomization], parent: fluxRelease }
 );

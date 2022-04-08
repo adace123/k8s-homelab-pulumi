@@ -8,7 +8,7 @@ import {
 
 export = {
   kubeconfig: pulumi.secret(cluster.kubeConfig),
-  fluxRepoKustomization: fluxRepoKustomization,
+  fluxRepoKustomization,
   fluxInfraKustomization
   // vaultToken: vaultServer.credentials.root_token,
 };
