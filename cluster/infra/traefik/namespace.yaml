@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   name: traefik
   labels:
-    shared-gateway-access: "true"
+    gateway: traefik

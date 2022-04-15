@@ -44,4 +44,4 @@ spec:
                       from: Selector
                       selector:
                         matchLabels:
-                          shared-gateway-access: "true"
+                          gateway: traefik
