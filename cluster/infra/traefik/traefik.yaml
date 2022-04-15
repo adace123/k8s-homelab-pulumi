@@ -37,6 +37,9 @@ spec:
             spec:
               listeners:
                 - allowedRoutes:
+                    name: web
+                    port: 8000
+                    protocol: HTTP
                     namespaces:
                       from: Selector
                       selector:
