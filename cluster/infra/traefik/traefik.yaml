@@ -18,9 +18,6 @@ spec:
   install:
     createNamespace: true
   values:
-    logs:
-      general:
-        level: DEBUG
     service:
       type: NodePort
     ports:
@@ -29,6 +26,16 @@ spec:
     experimental:
       kubernetesGateway:
         enabled: true
-    providers:
-      kubernetesGateway:
-      enabled: true
+  postRenderers:
+    - kustomize:
+        patchesStrategicMerge:
+          - apiVersion: gateway.networking.k8s.io/v1alpha2
+            kind: Gateway
+            spec:
+              listeners:
+                - allowedRoutes:
+                    namespaces:
+                      from: Selector
+                      selector:
+                        matchLabels:
+                          shared-gateway-access: "true"
