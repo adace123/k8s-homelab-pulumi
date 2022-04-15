@@ -36,10 +36,10 @@ spec:
               namespace: traefik
             spec:
               listeners:
-                - allowedRoutes:
-                    name: web
-                    port: 8000
-                    protocol: HTTP
+                - name: web
+                  port: 8000
+                  protocol: HTTP
+                  allowedRoutes:
                     namespaces:
                       from: Selector
                       selector:
