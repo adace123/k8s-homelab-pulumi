@@ -4,4 +4,5 @@ resources:
   - https://github.com/kubernetes-sigs/gateway-api/config/crd/?ref=v0.4.0
   - namespace.yaml
   - traefik.yaml
+  - service.yaml
   - dashboard-route.yaml
