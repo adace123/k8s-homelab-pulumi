@@ -6,6 +6,7 @@ metadata:
 spec:
   parentRefs:
     - name: traefik-gateway
+      namespace: traefik
   hostnames:
     - traefik.k8s.local
   rules:
