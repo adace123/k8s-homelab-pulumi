@@ -27,3 +27,6 @@ spec:
     experimental:
       kubernetesGateway:
         enabled: true
+    providers:
+      kubernetesGateway:
+      enabled: true

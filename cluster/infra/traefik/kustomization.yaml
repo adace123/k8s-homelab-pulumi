@@ -3,4 +3,4 @@ kind: Kustomization
 resources:
   - https://github.com/kubernetes-sigs/gateway-api/config/crd/?ref=v0.4.0
   - namespace.yaml
-  - helm-release.yaml
+  - traefik.yaml
