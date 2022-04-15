@@ -25,8 +25,8 @@ spec:
       type: NodePort
     ports:
       web:
-        port: 8000
-        nodePort: 32500
+        port: 80
+        nodePort: 80
     experimental:
       kubernetesGateway:
         enabled: true
