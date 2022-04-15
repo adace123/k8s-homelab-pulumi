@@ -18,6 +18,9 @@ spec:
   install:
     createNamespace: true
   values:
+    general:
+      logs:
+        level: DEBUG
     service:
       type: NodePort
     ports:
