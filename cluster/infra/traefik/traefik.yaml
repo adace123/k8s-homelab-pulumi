@@ -15,8 +15,6 @@ spec:
         kind: HelmRepository
         name: traefik
         namespace: flux-system
-  install:
-    createNamespace: true
   values:
     service:
       type: NodePort
