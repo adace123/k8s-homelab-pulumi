@@ -4,3 +4,4 @@ resources:
   - traefik.yaml
   - hashicorp.yaml
   - flux.yaml
+  - external-secrets.yaml

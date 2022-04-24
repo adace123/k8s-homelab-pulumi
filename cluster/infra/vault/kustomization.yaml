@@ -4,3 +4,4 @@ resources:
   - namespace.yaml
   - vault.yaml
   - server-route.yaml
+  - external-secrets.yaml
