@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # wait until Vault deployment is up and ready to receive traffic
-until curl "$VAULT_ADDR"; do
+until curl -sL "$VAULT_ADDR"; do
     sleep 2
 done
 

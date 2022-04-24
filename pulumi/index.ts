@@ -1,11 +1,11 @@
 import * as pulumi from "@pulumi/pulumi";
 
-import { cluster } from "./modules/kubernetes/cluster";
+import { cluster } from "./kind/";
 import {
   fluxInfraKustomization,
   fluxSourceKustomization
-} from "./modules/kubernetes/flux";
-import { VaultSetup } from "./modules/kubernetes/vault/setup";
+} from "./flux";
+import { VaultSetup } from "./vault/setup";
 
 const vaultConfig = new pulumi.Config("vault");
 const keyShares = vaultConfig.getNumber("key-shares") || 5;
@@ -18,7 +18,7 @@ const vaultSetup = new VaultSetup("k8s-vault-config", {
   vaultAddr
 });
 
-export = {
+export default {
   kubeconfig: pulumi.secret(cluster.kubeConfig),
   fluxSourceKustomization,
   fluxInfraKustomization,

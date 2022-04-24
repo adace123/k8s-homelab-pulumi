@@ -1,15 +1,14 @@
+
+
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
-import { KindCluster } from "../../providers/kind";
+import { KindCluster } from "./cluster";
 
 const config = new pulumi.Config("kind");
 const clusterName = config.get("cluster-name") || "pulumi";
-export const kubeconfigPath =
-  config.get("kubeconfigPath") || `./${clusterName}-kubeconfig`;
 export const cluster = new KindCluster(clusterName, {
   clusterName,
-  kubeconfigPath
 });
 
 export const provider = new k8s.Provider(

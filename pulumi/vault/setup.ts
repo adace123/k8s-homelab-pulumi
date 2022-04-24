@@ -4,7 +4,7 @@ import * as vault from "@pulumi/vault";
 import { existsSync, readFileSync } from "fs";
 import * as yaml from "yaml";
 
-import { cluster } from "../cluster";
+import { cluster } from "../kind/";
 import {
   K8SPolicyConfig,
   K8SRoleConfig,
@@ -20,15 +20,17 @@ interface VaultConfigInputs {
   credentialsOutputPath?: pulumi.Input<string>;
 }
 
+const kubeConfigPath = `./${cluster.name}-kubeconfig`;
+
 export class VaultSetup extends pulumi.ComponentResource {
   public credentials!: pulumi.Output<VaultRootCredentials>;
   private provider!: vault.Provider;
 
   initializeVault(inputs: VaultConfigInputs) {
     const vaultInitCommand = new local.Command("vault-init-command", {
-      create: "./modules/kubernetes/vault/vault_init.sh",
+      create: "./vault/vault_init.sh",
       environment: {
-        KUBECONFIG: cluster.kubeConfigPath,
+        KUBECONFIG: kubeConfigPath,
         KUBECONTEXT: cluster.kubeContext,
         VAULT_ADDR: inputs.vaultAddr.toString(),
         VAULT_KEY_SHARES: inputs.keyShares.toString(),
@@ -38,10 +40,10 @@ export class VaultSetup extends pulumi.ComponentResource {
 
     this.credentials = vaultInitCommand.stdout.apply((_) => {
       let credentials = {};
-      if (existsSync("./vault.json")) {
+      try {
         const vaultFileContents = readFileSync("./vault.json").toString();
         credentials = JSON.parse(vaultFileContents) as VaultRootCredentials;
-      }
+      } catch (e) {}
       return pulumi.secret(credentials as VaultRootCredentials);
     });
 
@@ -79,7 +81,7 @@ export class VaultSetup extends pulumi.ComponentResource {
     const serviceAccountToken = new local.Command(
       "vault-service-account-token",
       {
-        create: `kubectl --context=$KUBECONTEXT --kubeconfig=$KUBECONFIG exec -it -n vault vault-0 -- cat /var/run/secrets/kubernetes.io/serviceaccount/token`,
+        create: `kubectl --context=$KUBECONTEXT --kubeconfig=${kubeConfigPath} exec -it -n vault vault-0 -- cat /var/run/secrets/kubernetes.io/serviceaccount/token`,
         environment: {
           KUBECONFIG: cluster.kubeConfigPath,
           KUBECONTEXT: cluster.kubeContext
@@ -91,7 +93,7 @@ export class VaultSetup extends pulumi.ComponentResource {
     const caCert = new local.Command(
       "vault-ca-cert",
       {
-        create: `kubectl --context=$KUBECONTEXT --kubeconfig=$KUBECONFIG exec -it -n vault vault-0 -- cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt`,
+        create: `kubectl --context=$KUBECONTEXT --kubeconfig=${kubeConfigPath} exec -it -n vault vault-0 -- cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt`,
         environment: {
           KUBECONFIG: cluster.kubeConfigPath,
           KUBECONTEXT: cluster.kubeContext
@@ -103,7 +105,7 @@ export class VaultSetup extends pulumi.ComponentResource {
     const policyResources: Array<vault.Policy> = [];
 
     const policies = yaml.parse(
-      readFileSync(`./modules/kubernetes/vault/policies.yaml`).toString()
+      readFileSync(`./vault/policies.yaml`).toString()
     ) as Array<K8SPolicyConfig>;
 
     for (const { name, policy } of policies) {
@@ -140,7 +142,7 @@ export class VaultSetup extends pulumi.ComponentResource {
     );
 
     const roles = yaml.parse(
-      readFileSync(`./modules/kubernetes/vault/roles.yaml`).toString()
+      readFileSync(`./vault/roles.yaml`).toString()
     ) as Array<K8SRoleConfig>;
 
     for (const role of roles) {

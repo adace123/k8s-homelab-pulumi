@@ -5,28 +5,26 @@ import { readFileSync, unlinkSync } from "fs";
 
 interface KindInputs {
   clusterName: string;
-  kubeconfigPath?: string;
+  kubeConfigPath?: string;
 }
 
 interface KindOutputs {
   kubeContext: string;
   kubeConfig: string;
-  kubeConfigPath: string;
   kindConfigHash: string;
 }
 
 export class KindClusterProvider implements pulumi.dynamic.ResourceProvider {
   getKindConfigHash(): string {
-    const kindConfig = readFileSync("./modules/kubernetes/kind.yaml");
+    const kindConfig = readFileSync("./kind/kind.yaml");
     const hash = createHash("md5");
     hash.update(kindConfig);
     return hash.digest("hex");
   }
 
   async create(inputs: KindInputs): Promise<pulumi.dynamic.CreateResult> {
-    const kubeConfigPath =
-      inputs.kubeconfigPath || `./${inputs.clusterName}-kubeconfig`;
-    const cmdString = `kind create cluster --name ${inputs.clusterName} --config ./modules/kubernetes/kind.yaml --kubeconfig=${kubeConfigPath}`;
+    const kubeConfigPath =`./${inputs.clusterName}-kubeconfig`;
+    const cmdString = `kind create cluster --name ${inputs.clusterName} --config ./kind/kind.yaml --kubeconfig=${kubeConfigPath}`;
 
     execSync(cmdString, { stdio: "inherit" });
 
@@ -67,7 +65,7 @@ export class KindClusterProvider implements pulumi.dynamic.ResourceProvider {
   ): Promise<pulumi.dynamic.UpdateResult> {
     this.delete(id, {
       clusterName: news.clusterName,
-      kubeconfigPath: news.kubeconfigPath
+      kubeConfigPath: news.kubeConfigPath
     });
     return this.create(news);
   }
@@ -76,12 +74,13 @@ export class KindClusterProvider implements pulumi.dynamic.ResourceProvider {
     execSync(`kind delete cluster --name ${id}`, {
       stdio: "inherit"
     });
-    const kubeConfigPath = `./${id}-kubeconfig`;
+    const kubeConfigPath = `~/.${id}-kubeconfig`;
     unlinkSync(kubeConfigPath);
   }
 }
 
 export class KindCluster extends pulumi.dynamic.Resource {
+  public readonly name: string;
   public readonly kubeConfig!: pulumi.Output<string>;
   public readonly kubeConfigPath!: pulumi.Output<string>;
   public readonly kubeContext!: pulumi.Output<string>;
@@ -98,5 +97,6 @@ export class KindCluster extends pulumi.dynamic.Resource {
       { ...props, kindConfigHash: null, kubeConfig: null, kubeContext: null },
       opts
     );
+    this.name = name;
   }
 }

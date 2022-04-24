@@ -1,3 +1,4 @@
 name: k8s-pulumi
 runtime: nodejs
 description: A minimal Kubernetes TypeScript Pulumi program
+main: ./pulumi
