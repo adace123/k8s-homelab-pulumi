@@ -12,7 +12,7 @@ const fluxRelease = new k8s.helm.v3.Release(
     name: "flux",
     namespace: "flux-system",
     chart: "flux2",
-    version: "0.15.0",
+    version: "0.16.0",
     createNamespace: true,
     repositoryOpts: {
       repo: "https://fluxcd-community.github.io/helm-charts"
@@ -23,8 +23,7 @@ const fluxRelease = new k8s.helm.v3.Release(
 
 interface FluxKustomizationInputs {
   name: string;
-  directory: string;
-  readyTimeoutSeconds?: number;
+  manifest: string;
   repoSource?: string;
 }
 
@@ -35,8 +34,7 @@ interface FluxKustomizationOutputs {
 
 const fluxConfig = new pulumi.Config("flux");
 const gitRepoUrl = fluxConfig.require("repo-ssh-url");
-const sshKeyPath =
-  fluxConfig.getSecret("repo-private-key-path") || "~/.ssh/id_rsa";
+const sshKeyPath = fluxConfig.get("repo-private-key-path") || "~/.ssh/id_rsa";
 
 /* 
 Minimal bootstraping for the Flux controller
@@ -49,13 +47,14 @@ const createGithubSecret = new Command(
   { dependsOn: [fluxRelease], parent: fluxRelease }
 );
 
-const githubSource = new k8s.yaml.ConfigFile(
+const githubSource = new k8s.kustomize.Directory(
   "github-source",
   {
-    file: `${resolve(".")}/cluster/repos/git/k8s-homelab-repo.yaml`
+    directory: `./cluster/sources/git`
   },
   { provider, dependsOn: [createGithubSecret], parent: fluxRelease }
 );
+// end minimal bootstrapping
 
 class FluxKustomizationProvider implements pulumi.dynamic.ResourceProvider {
   async diff(
@@ -80,20 +79,14 @@ class FluxKustomizationProvider implements pulumi.dynamic.ResourceProvider {
     inputs: FluxKustomizationInputs
   ): Promise<pulumi.dynamic.CreateResult> {
     const repoSource = inputs.repoSource || "k8s-homelab-repo";
-    const timeout = inputs.readyTimeoutSeconds || 60;
 
     execSync(
       `flux reconcile source git ${repoSource} --kubeconfig=${kubeconfigPath}`
     );
 
-    const kustomizeCreateCommand = `
-      flux create kustomization ${inputs.name} \
-      --source=${repoSource} \
-      --path=${inputs.directory} \
-      --wait \
-      --timeout=${timeout}s \
-      --kubeconfig=${kubeconfigPath}`;
-    execSync(kustomizeCreateCommand, { stdio: "inherit" });
+    execSync(`kubectl apply -f ./cluster/deploy/${inputs.name}.yaml`, {
+      stdio: "inherit"
+    });
 
     execSync(
       `flux reconcile kustomization ${inputs.name} --kubeconfig=${kubeconfigPath}`,
@@ -103,7 +96,7 @@ class FluxKustomizationProvider implements pulumi.dynamic.ResourceProvider {
     return {
       id: inputs.name,
       outs: {
-        directory: `${resolve(".")}/${inputs.directory}`,
+        manifest: `${resolve(".")}/${inputs.manifest}`,
         name: inputs.name
       }
     };
@@ -143,11 +136,11 @@ class FluxKustomization extends pulumi.dynamic.Resource {
   }
 }
 
-export const fluxRepoKustomization = new FluxKustomization(
+export const fluxSourceKustomization = new FluxKustomization(
   "flux-repo-kustomization",
   {
-    name: "flux-repos",
-    directory: "cluster/repos"
+    name: "sources",
+    manifest: "./cluster/sources"
   },
   { dependsOn: [githubSource], parent: fluxRelease }
 );
@@ -155,8 +148,8 @@ export const fluxRepoKustomization = new FluxKustomization(
 export const fluxInfraKustomization = new FluxKustomization(
   "flux-infra-kustomization",
   {
-    name: "flux-infra",
-    directory: "cluster/infra"
+    name: "infra",
+    manifest: "./cluster/infra"
   },
-  { dependsOn: [fluxRepoKustomization], parent: fluxRelease }
+  { dependsOn: [fluxSourceKustomization], parent: fluxRelease }
 );
