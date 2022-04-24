@@ -12,7 +12,7 @@ const fluxRelease = new k8s.helm.v3.Release(
     name: "flux",
     namespace: "flux-system",
     chart: "flux2",
-    version: "0.16.0",
+    version: "0.18.0",
     createNamespace: true,
     repositoryOpts: {
       repo: "https://fluxcd-community.github.io/helm-charts"
