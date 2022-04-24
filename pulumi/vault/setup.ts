@@ -1,7 +1,7 @@
 import { local } from "@pulumi/command";
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
-import { existsSync, readFileSync } from "fs";
+import { readFileSync } from "fs";
 import * as yaml from "yaml";
 
 import { cluster } from "../kind/";
