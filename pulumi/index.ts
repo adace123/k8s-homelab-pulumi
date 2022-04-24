@@ -1,10 +1,7 @@
 import * as pulumi from "@pulumi/pulumi";
 
+import { fluxInfraKustomization, fluxSourceKustomization } from "./flux";
 import { cluster } from "./kind/";
-import {
-  fluxInfraKustomization,
-  fluxSourceKustomization
-} from "./flux";
 import { VaultSetup } from "./vault/setup";
 
 const vaultConfig = new pulumi.Config("vault");

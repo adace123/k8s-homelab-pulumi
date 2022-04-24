@@ -23,7 +23,7 @@ export class KindClusterProvider implements pulumi.dynamic.ResourceProvider {
   }
 
   async create(inputs: KindInputs): Promise<pulumi.dynamic.CreateResult> {
-    const kubeConfigPath =`./${inputs.clusterName}-kubeconfig`;
+    const kubeConfigPath = `./${inputs.clusterName}-kubeconfig`;
     const cmdString = `kind create cluster --name ${inputs.clusterName} --config ./kind/kind.yaml --kubeconfig=${kubeConfigPath}`;
 
     execSync(cmdString, { stdio: "inherit" });

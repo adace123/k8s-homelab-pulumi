@@ -49,7 +49,7 @@ const createGithubSecret = new Command(
 const githubSource = new k8s.kustomize.Directory(
   "github-source",
   {
-    directory: `${resolve('../')}/cluster/sources/git`
+    directory: `${resolve("../")}/cluster/sources/git`
   },
   { provider, dependsOn: [createGithubSecret], parent: fluxRelease }
 );
@@ -82,9 +82,14 @@ class FluxKustomizationProvider implements pulumi.dynamic.ResourceProvider {
       `flux reconcile source git ${repoSource} --kubeconfig=${kubeConfigPath}`
     );
 
-    execSync(`kubectl --kubeconfig=${kubeConfigPath} apply -f ${resolve('../')}/cluster/deploy/${inputs.name}.yaml`, {
-      stdio: "inherit"
-    });
+    execSync(
+      `kubectl --kubeconfig=${kubeConfigPath} apply -f ${resolve(
+        "../"
+      )}/cluster/deploy/${inputs.name}.yaml`,
+      {
+        stdio: "inherit"
+      }
+    );
 
     execSync(
       `flux reconcile kustomization ${inputs.name} --kubeconfig=${kubeConfigPath}`,
@@ -95,7 +100,7 @@ class FluxKustomizationProvider implements pulumi.dynamic.ResourceProvider {
       id: inputs.name,
       outs: {
         name: inputs.name,
-        localDir: `${resolve('../')}/cluster/${inputs.name}`
+        localDir: `${resolve("../")}/cluster/${inputs.name}`
       }
     };
   }
@@ -122,7 +127,6 @@ class FluxKustomizationProvider implements pulumi.dynamic.ResourceProvider {
       { stdio: "inherit" }
     );
   }
-  
 }
 
 class FluxKustomization extends pulumi.dynamic.Resource {
@@ -139,7 +143,7 @@ export const fluxSourceKustomization = new FluxKustomization(
   "flux-repo-kustomization",
   {
     name: "sources",
-    manifest: `${resolve('../')}/cluster/sources`
+    manifest: `${resolve("../")}/cluster/sources`
   },
   { dependsOn: [githubSource], parent: fluxRelease }
 );
@@ -148,7 +152,7 @@ export const fluxInfraKustomization = new FluxKustomization(
   "flux-infra-kustomization",
   {
     name: "infra",
-    manifest: `${resolve('../')}/cluster/infra`
+    manifest: `${resolve("../")}/cluster/infra`
   },
   { dependsOn: [fluxSourceKustomization], parent: fluxRelease }
 );
