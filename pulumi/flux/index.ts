@@ -140,7 +140,7 @@ class FluxKustomization extends pulumi.dynamic.Resource {
 }
 
 export const fluxSourceKustomization = new FluxKustomization(
-  "flux-repo-kustomization",
+  "flux-source-kustomization",
   {
     name: "sources",
     manifest: `${resolve("../")}/cluster/sources`
@@ -148,11 +148,16 @@ export const fluxSourceKustomization = new FluxKustomization(
   { dependsOn: [githubSource], parent: fluxRelease }
 );
 
+export const fluxCRDKustomization = new FluxKustomization("flux-crd-kustomization", {
+  name: "crds",
+  manifest: `${resolve("../")}/cluster/crds`
+}, { dependsOn: [githubSource], parent: fluxRelease });
+
 export const fluxInfraKustomization = new FluxKustomization(
   "flux-infra-kustomization",
   {
     name: "infra",
     manifest: `${resolve("../")}/cluster/infra`
   },
-  { dependsOn: [fluxSourceKustomization], parent: fluxRelease }
+  { dependsOn: [fluxSourceKustomization, fluxCRDKustomization], parent: fluxRelease }
 );
